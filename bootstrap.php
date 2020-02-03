@@ -84,7 +84,7 @@ function formatMilliseconds($milliseconds) {
     $seconds = $seconds % 60;
     $minutes = $minutes % 60;
 
-    $format = '%u:%02u:%02u.%03u';
-    $time = sprintf($format, $hours, $minutes, $seconds, $milliseconds);
+    $format = '%02u:%02u:%02u ';
+    $time = sprintf($format, $hours, $minutes, $seconds);
     return rtrim($time, '0');
 }
