@@ -1,0 +1,14 @@
+{
+    "DB_host": "localhost",
+    "DB_name": "sessionmanager",
+    "DB_user": "root",
+    "DB_pass": "",
+    "installed": false,
+    "USER_PASS": "Hawi123456",
+    "tables": {
+        "46d99b3477": {
+            "table_name": "sessions",
+            "tables_columns": ["id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY ", "long INT(50) NOT NULL   ", "starts BIGINT(20) NOT NULL   ", "ends BIGINT(20) NOT NULL   ", "set_dat TIMESTAMP NOT NULL   ", "name VARCHAR(25) NOT NULL   ", "notes TEXT NOT NULL   ", "completed INT(11) NOT NULL   "]
+        }
+    }
+}
