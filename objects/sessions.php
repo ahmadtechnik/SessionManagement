@@ -12,7 +12,7 @@ class sessions {
      * 
      */
     function get_all_session_name_without_ducplicat() {
-        $SQL = "SELECT DISTINCT  * FROM " . $this->getTable_name();
+        $SQL = "SELECT DISTINCT  * FROM " . $this->getTable_name() . " ORDER BY id";
         return DB::feachSQLObject(DB::SQLquery($SQL));
     }
 
@@ -25,10 +25,9 @@ class sessions {
      * @param type $notes
      * @param type $completed
      */
-    function insert_new_session($long, $starts, $ends, $name, $notes, $completed) {
+    function insert_new_session($long, $starts, $ends, $name = "DefualtName", $notes, $completed) {
         $notes = DB::mysql_escape_mimic($notes);
         $name = DB::mysql_escape_mimic($name);
-        
         $columns = "(`long`, `starts`, `ends` , `set_dat`, `name`, `notes`, `completed`)";
         $values = "($long, $starts, $ends, NOW(), '$name', '$notes', $completed)";
         $SQL = "INSERT INTO " . $this->getTable_name() . " $columns VALUES $values";

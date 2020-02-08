@@ -102,11 +102,11 @@ $filter = [];
             var sess_left = sessRow.left * 1000;
 
             window.invertalsSes[index] = setTimeout(() => {
-                
+
                 window.sound = new Howl({
                     src: ['notification.mp3'],
                     autoplay: true,
-                    volume: 1,
+                    volume: 0.2,
                     loop: true,
                     onend: function () {
                         update_table();
@@ -124,7 +124,7 @@ $filter = [];
         });
 
     }
-    console.log(window.invertalsSes);
+
     // set interval to update page title and charms values
     var title_ = [];
     clearInterval(window.updater);

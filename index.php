@@ -1,13 +1,15 @@
 
 <?php
-
+if (!isset($_GET["ITSME"])) {
+    die("<h1>NO ACCESS...</h1>");
+}
 include_once './bootstrap.php';
 $sessions_object = new sessions();
 $autoComplete = [];
 $get = $sessions_object->get_all_session_name_without_ducplicat();
 
 foreach ($get as $key => $row) {
-    array_push($autoComplete, $row["name"]);
+    $autoComplete[$row["name"]] = ucfirst($row["name"]);
 }
 ?>
 <html>
@@ -39,7 +41,7 @@ foreach ($get as $key => $row) {
                  data-show-active="true" >
                 <div class="frame">
                     <div class="heading bg-blue fg-white">Add Session</div>
-                    <div class="content">
+                    <div class="content bg-light">
                         <section class="add_session_section " id="add_session_section">
                             <div class="form-group">
                                 <label>SESSION STARTS</label>
@@ -62,7 +64,8 @@ foreach ($get as $key => $row) {
                                           id="session_notes"></textarea>
                             </div>
 
-                            <button class="button primary mt-3" id="add_session_btn">Add session</button>
+                            <button class="button primary mt-3" id="add_session_btn">Add Session</button>
+                            <button class="button alert mt-3" id="add_completed_session">Add <small>Completed / Started</small> Session</button>
                             <hr>
                         </section>
                     </div>
@@ -70,7 +73,7 @@ foreach ($get as $key => $row) {
 
                 <div class="frame active">
                     <div class="heading bg-blue fg-white">Old Sessions</div>
-                    <div class="content">
+                    <div class="content bg-light">
                         <section class="show_sessions_info" id="show_sessions_info">
                             <?php include_once './sessions_table.php'; ?>
                         </section>
@@ -78,7 +81,7 @@ foreach ($get as $key => $row) {
                 </div>
                 <div class="frame active ">
                     <div class="heading bg-blue fg-white">Statistics</div>
-                    <div class="content">
+                    <div class="content bg-light">
                         <section id="statistikSection" class="statistikSection "></section>
                     </div>
                 </div>
@@ -94,6 +97,7 @@ foreach ($get as $key => $row) {
 <script >
     window.invertals = {};
     $(document).ready(() => {
+        ajaxSetup();
         /**
          * 
          */
@@ -104,10 +108,9 @@ foreach ($get as $key => $row) {
             var selected_h = session_long.h * 60 * 60;
             var selected_m = session_long.m * 60;
             var long_in_millsc = (selected_h + selected_m) * 1000;
-
             var time_starts = new Date().getTime() / 1000;
             var time_end = time_starts + (long_in_millsc / 1000);
-
+            console.log(time_end);
             if (session_name !== "") {
                 $.ajax("post.php", {
                     type: 'POST',
@@ -119,10 +122,8 @@ foreach ($get as $key => $row) {
                         time_starts: time_starts,
                         time_end: time_end
                     },
-                    success: function (data) {
-                        update_table();
-                        update_statistic();
-                        console.log(data);
+                    success: function (data, textStatus, jqXHR) {
+                        reCallUpdates();
                     }
                 });
             } else {
@@ -130,9 +131,86 @@ foreach ($get as $key => $row) {
             }
 
         });
+        $(`#add_completed_session`).click(() => {
 
+            $.ajax("addCompletedSession.php", {
+                success: function (data) {
+                    var selected_long = null;
+                    var entered_name = null;
+                    var entered_note = null;
+                    var dialog = Metro.dialog.create({
+                        title: "Use Windows location service?",
+                        content: `${data}`,
+                        closeButton: false,
+                        overlayAlpha: 0.9,
+                        removeOnClose: true,
+                        actions: [
+                            {
+                                caption: "Submit",
+                                cls: " primary",
+                                onclick: function () {
+                                    /**
+                                     * Form input data
+                                     var selected_long = $(`#selected_long`);
+                                     var selected_date = $(`#selected_date`);
+                                     var selected_time = $(`#selected_time`);
+                                     var entered_name = $(`#entered_name`);
+                                     var entered_note = $(`#entered_note`);
+                                     */
+
+                                    var session_selected_date = Metro.getPlugin("#selected_date", "datepicker").date();
+                                    var session_selected_start_time = Metro.getPlugin("#selected_time", "timepicker").time();
+                                    var startsFixed = new Date(
+                                            session_selected_date.getFullYear(),
+                                            session_selected_date.getMonth(),
+                                            session_selected_date.getDate(),
+                                            session_selected_start_time.h,
+                                            session_selected_start_time.m
+                                            ).getTime() / 1000;
+
+                                    if (entered_name.val() !== "" && selected_long.val() !== "00:00:00") {
+                                        var session_long = Metro.getPlugin("#selected_long", "timepicker").time();
+                                        // convert long into millisecound
+                                        var inMillSecount = ((session_long.h * 60 * 60) + (session_long.m * 60));
+                                        var endOfSesion = startsFixed + inMillSecount;
+                                        $.post("post.php", {
+                                            order: "inseret_finished_session",
+                                            selected_long: inMillSecount * 1000,
+                                            selected_date: startsFixed,
+                                            session_end: endOfSesion,
+                                            entered_name: entered_name.val(),
+                                            entered_note: entered_note.val()
+                                        }, (response) => {
+                                            if (typeof response === "object") {
+                                                if (response.INSERTED) {
+                                                    Metro.dialog.close(dialog);
+                                                }
+                                            }
+                                            reCallUpdates();
+                                        });
+                                    } else {
+                                        alert("Please enter session name or check Session long.");
+                                    }
+                                }
+                            },
+                            {
+                                caption: "Cancel",
+                                cls: "js-dialog-close"
+                            }
+                        ],
+                        onShow: () => {
+                            selected_long = $(`#selected_long`);
+                            entered_name = $(`#entered_name`);
+                            entered_note = $(`#entered_note`);
+                        }
+                    });
+                }
+            });
+        });
+        /**
+         * 
+         */
         window.invertals.updateTable = setInterval(update_table, 1000 * 60);
-
         $(document).on("click", '.clickablerow', (event) => {
             var id = $(event.target).closest("tr").attr("id");
             if (event.ctrlKey) {
@@ -142,14 +220,12 @@ foreach ($get as $key => $row) {
                         order: "remove_row_from_db",
                         row_id: id
                     },
-                    success: function (data) {
-                        update_table();
-                        update_statistic();
+                    success: function (data, textStatus, jqXHR) {
+                        reCallUpdates();
                     }
                 });
             }
         });
-
         /**
          * 
          * @returns {undefined}
@@ -171,6 +247,10 @@ foreach ($get as $key => $row) {
             }
         });
     }
+    /**
+     * 
+     * @returns {undefined}
+     */
     var update_statistic = () => {
 
         $(`#statistikSection`).load("./statistic.php", {}, () => {
@@ -178,7 +258,11 @@ foreach ($get as $key => $row) {
         });
     }
 
-
+    /**
+     * 
+     * @param {type} minutes
+     * @returns {String}
+     */
     var convertMinsToHrsMins = function (minutes) {
         var h = Math.floor(minutes / 60);
         var m = minutes % 60;
@@ -186,7 +270,11 @@ foreach ($get as $key => $row) {
         m = m < 10 ? '0' + m : m;
         return h + ':' + m;
     }
-
+    /**
+     * 
+     * @param {type} s
+     * @returns {String}
+     */
     function msToTime(s) {
         var ms = s % 1000;
         s = (s - ms) / 1000;
@@ -194,8 +282,29 @@ foreach ($get as $key => $row) {
         s = (s - secs) / 60;
         var mins = s % 60;
         var hrs = (s - mins) / 60;
-
         return  ('0' + hrs).slice(-2) + ':' + ('0' + mins).slice(-2) + ':' + ('0' + secs).slice(-2);
     }
+    /**
+     * 
+     * @returns {undefined}
+     */
+    function ajaxSetup() {
+        $.ajaxSetup({
+            dataFilter: (data, type) => {
+                try {
+                    return JSON.parse(data);
+                } catch (e) {
+                    return data;
+                }
+            },
+            success: (result, status, xhr) => {
 
+                //console.log(result, status, xhr);
+            }
+        });
+    }
+    function reCallUpdates() {
+        update_table();
+        update_statistic();
+    }
 </script>
