@@ -7,7 +7,7 @@ include_once './bootstrap.php';
 $sessions_object = new sessions();
 $autoComplete = [];
 $get = $sessions_object->get_all_session_name_without_ducplicat();
-
+// TEST CHANGE...
 foreach ($get as $key => $row) {
     $autoComplete[$row["name"]] = ucfirst($row["name"]);
 }
